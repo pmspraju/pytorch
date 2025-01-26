@@ -1,72 +1,55 @@
 import os.path
-
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import setup_chat_format
 import torch
 
-from huggingface_hub import login
 
-def exportKey():
-    path = r'/home/nachiketa/Documents/Keys/hugging_face'
-    path = os.path.join(path, 'key')
-    with open(path, 'rt') as f:
-        key = f.read().strip()
-    os.environ['HF_TOKEN'] = key
-    return key
-
-def setDevice():
-
-    device = (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available() else "cpu"
-    )
-
-    return device
-
-def setModel(model_name):
-    device = setDevice()
-    model = AutoModelForCausalLM.from_pretrained(
-        pretrained_model_name_or_path=model_name
-    ).to(device)
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=model_name)
-    model, tokenizer = setup_chat_format(model=model, tokenizer=tokenizer)
-
-    return model, tokenizer
+from createDataset import SmolLm2135M, QuantumQA, TokenizeDataset, PrepareDataset
+from finetune import FinetuneSmolLLM2135M
+from utls import *
 
 if __name__ == "__main__":
 
-    # Get the key and login
-    key = exportKey()
-    print(key)
-    login()
-    print("Logged in successfully.")
-
     # Set the model
-    #model_name = "HuggingFaceTB/SmolLM2-135M"
-    model_path = r'/home/nachiketa/Documents/Workspaces/checkpoints/smolLM2-135M'
-    model_name = model_path
-    model, tokenizer = setModel(model_name)
+    model, tokenizer = SmolLm2135M(MODEL_SMOLLM2_135M_PATH).setModel()
 
-    # Define message format for the base model SmolLM2-135M
-    messages = [
-        {"role": "user", "content": "Hello, how are you?"},
-        {
-            "role": "assistant",
-            "content": "I'm doing well, thank you! How can I assist you today?",
-        },
-    ]
+    # set the dataset
+    datasetQA = QuantumQA(os.path.join(DATA_PATH, 'qc.xlsx'))
+    #print("Original conversation:", datasetQA[0])
+    datasetTOK = TokenizeDataset(dataset=datasetQA, tokenizer=tokenizer)
+    #print("Conversation tokenized:", datasetTOK[0])
+    #print("Conversation decoded:", tokenizer.decode(token_ids=datasetTOK[0]))
 
-    # apply chat template to messages without tokenization
-    input_text = tokenizer.apply_chat_template(messages, tokenize=False)
-    print("Conversation with template:", input_text)
+    # Split the dataset
+    train_ds, test_ds = PrepareDataset(datasetTOK,).dataloader()
+    print("Length of train dataset:", len(train_ds))
+    print("Length of test dataset:", len(test_ds))
+    print("Number of steps per epoch:", len(train_ds) // BATCH_SIZE)
+    #print("Conversation decoded:", tokenizer.decode(token_ids=train_ds[0]))
 
-    # Check the decode with tokenization
-    input_text = tokenizer.apply_chat_template(
-        messages, tokenize=True, add_generation_prompt=True
-    )
+    # set the finetuner
+    #finetuner = FinetuneSmolLLM2135M()
+    #finetuner.testbasemodel()
 
-    print("Conversation decoded:", tokenizer.decode(token_ids=input_text))
+    # emtpy the cache
+    torch.cuda.empty_cache()
+
+    # check the gpu memory
+    if torch.cuda.is_available():
+        gpu_id = 0  # Replace with the GPU ID you want to check
+        free_mem, total_mem = torch.cuda.mem_get_info(device=f'cuda:{gpu_id}')
+        print(f"Free memory: {free_mem / (1024 ** 2):.2f} MB")
+        print(f"Total memory: {total_mem / (1024 ** 2):.2f} MB")
+    else:
+        print("CUDA is not available.")
+
+    # fine tune:Train the model
+    #finetuner.finetune(train_ds, test_ds)
+
+    # Test the model
+    saved_finetuner = FinetuneSmolLLM2135M(FINE_TUNE_MODEL_PATH)
+    saved_finetuner.testfinetunedmodel()
+
+
+
 
 
 

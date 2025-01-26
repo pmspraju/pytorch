@@ -34,6 +34,21 @@ Can I ask a question?<|im_end|>
 7. with clear role indicators (system, user, assistant).
 8. It's important to note that a base model could be fine-tuned on different chat templates to create instruct models
 
+The tokenize=False parameter in apply_chat_template is used first because 
+we want to get the formatted string output first, rather than immediately converting it to token IDs. 
+Here's why:
+
+When tokenize=False:
+1. The chat template is applied to format the messages into the correct string format
+2. Returns a plain text string with all the special tokens and formatting
+3. Allows you to see and verify the formatted template before tokenization
+4. The actual tokenization happens in the separate tokenizer call afterward
+
+
+When tokenize=True:
+1. It would immediately convert the formatted template into token IDs
+2. We wouldn't be able to inspect the intermediate formatted text
+3. We'd lose flexibility in how we want to handle the subsequent tokenization
 
 
 
