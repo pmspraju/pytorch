@@ -1,6 +1,5 @@
-import os
+import math
 
-import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainerCallback
 from datasets import load_dataset
 from trl import SFTConfig, SFTTrainer, setup_chat_format
@@ -10,11 +9,40 @@ from createDataset import SmolLm2135M
 
 class ClearCacheCallback(TrainerCallback):
     def on_epoch_end(self, args, state, control, **kwargs):
-        print(f"Clearing GPU cache after epoch {state.epoch}...")
-        torch.cuda.empty_cache()
+        print ('End of epoch memory usage')
+        print_gpu_utilization()
+
+        # Clear the cache after every N epochs
+        N = 3
+        if (state.epoch + 1) % N == 0:
+            print('Before clearing cache:')
+            print_gpu_utilization()
+
+            print(f"Clearing GPU cache after epoch {state.epoch}...")
+            torch.cuda.empty_cache()
+
+            print('After clearing cache:')
+            print_gpu_utilization()
+
+        # Clearing the cache is helping memory utilization but disrupting the training
+        # clearing from almost 12GB to 3GB
+        # instead clear after N epcchs
+
+        # Cache includes
+        # Training data batches
+        # Gradients Optimizer states
+        # Forward pass activations
+
+        # Sample statistics -
+        #GPU memory occupied: 12978 MB.
+        #Clearing GPU cache after epoch 1.0
+        #After clearing cache:
+        #GPU memory occupied: 3240 MB
 
 class FinetuneSmolLLM2135M:
     def __init__(self, model_path=MODEL_SMOLLM2_135M_PATH):
+        # clear the cache before fine tuning
+        torch.cuda.empty_cache()
 
         # set the device
         self.device = (
@@ -35,8 +63,9 @@ class FinetuneSmolLLM2135M:
         self.sft_config = SFTConfig(
             output_dir=FINE_TUNE_MODEL_PATH,  # Directory to save model checkpoints
             #max_steps=10,  # Adjust based on dataset size and desired training duration
-            num_train_epochs=20,  # Adjust based on dataset size and desired training duration
+            num_train_epochs=21,  # Adjust based on dataset size and desired training duration
             per_device_train_batch_size=2,  # Set according to your GPU memory capacity
+            gradient_accumulation_steps=1,  # Set according to your GPU memory capacity
             bf16=True,  # Use bfloat16 for training
             learning_rate=5e-5,  # Common starting point for fine-tuning
             logging_steps=10,  # Frequency of logging training metrics

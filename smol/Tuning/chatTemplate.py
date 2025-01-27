@@ -25,26 +25,15 @@ if __name__ == "__main__":
     print("Number of steps per epoch:", len(train_ds) // BATCH_SIZE)
     #print("Conversation decoded:", tokenizer.decode(token_ids=train_ds[0]))
 
-    # set the finetuner
-    #finetuner = FinetuneSmolLLM2135M()
+    # test the base model
+    finetuner = FinetuneSmolLLM2135M()
     #finetuner.testbasemodel()
 
-    # emtpy the cache
-    torch.cuda.empty_cache()
-
-    # check the gpu memory
-    if torch.cuda.is_available():
-        gpu_id = 0  # Replace with the GPU ID you want to check
-        free_mem, total_mem = torch.cuda.mem_get_info(device=f'cuda:{gpu_id}')
-        print(f"Free memory: {free_mem / (1024 ** 2):.2f} MB")
-        print(f"Total memory: {total_mem / (1024 ** 2):.2f} MB")
-    else:
-        print("CUDA is not available.")
 
     # fine tune:Train the model
     #finetuner.finetune(train_ds, test_ds)
 
-    # Test the model
+    # Test the fine tuned model
     saved_finetuner = FinetuneSmolLLM2135M(FINE_TUNE_MODEL_PATH)
     saved_finetuner.testfinetunedmodel()
 
