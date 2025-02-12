@@ -5,13 +5,18 @@ from datasets import load_dataset
 from trl import SFTConfig, SFTTrainer, setup_chat_format
 
 from utls import *
-from createDataset import SmolLm2135M
+#from createDataset import SmolLm2135M
+from createModel import  SmolLm2135M
 
 class ClearCacheCallback(TrainerCallback):
     def on_epoch_end(self, args, state, control, **kwargs):
         print ('End of epoch memory usage')
         print_gpu_utilization()
 
+        # record memory snapshot
+        #torch.cuda.memory._dump_snapshot(f"memory_epoch_{state.epoch}.pkl")
+
+        return
         # Clear the cache after every N epochs
         N = 3
         if (state.epoch + 1) % N == 0:
@@ -65,7 +70,7 @@ class FinetuneSmolLLM2135M:
             #max_steps=10,  # Adjust based on dataset size and desired training duration
             num_train_epochs=21,  # Adjust based on dataset size and desired training duration
             per_device_train_batch_size=2,  # Set according to your GPU memory capacity
-            gradient_accumulation_steps=1,  # Set according to your GPU memory capacity
+            gradient_accumulation_steps=2,  # Set according to your GPU memory capacity
             bf16=True,  # Use bfloat16 for training
             learning_rate=5e-5,  # Common starting point for fine-tuning
             logging_steps=10,  # Frequency of logging training metrics
@@ -78,9 +83,9 @@ class FinetuneSmolLLM2135M:
             hub_model_id=self.finetune_name,  # Set a unique name for your model
         )
 
-    def testbasemodel(self):
+    def testbasemodel(self, prompt):
         #prompt = "Write a haiku about programming"
-        prompt = "Can a Turing machine simulate a quantum computer"
+        #prompt = "Can a Turing machine simulate a quantum computer"
 
         # Format with template
         messages = [{"role": "user", "content": prompt}]
@@ -115,9 +120,9 @@ class FinetuneSmolLLM2135M:
         # Save the model
         trainer.save_model(f"./{self.finetune_name}")
 
-    def testfinetunedmodel(self):
-        # prompt = "Write a haiku about programming"
-        prompt = "Can a Turing machine simulate a quantum computer"
+    def testfinetunedmodel(self, prompt):
+        #prompt = "Write a haiku about programming"
+        #prompt = "Can a Turing machine simulate a quantum computer"
 
         # Format with template
         messages = [{"role": "user", "content": prompt}]

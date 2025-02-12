@@ -2,6 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import setup_chat_format
 import torch
 from torch.utils.data import Dataset, random_split, DataLoader
+from datasets import load_dataset
 
 import pandas as pd
 import os
@@ -9,41 +10,6 @@ import os
 from huggingface_hub import login
 
 from utls import *
-
-class SmolLm2135M:
-
-    def __init__(self, model_path):
-        self.model_path = model_path
-        self.device = (
-            "cuda"
-            if torch.cuda.is_available()
-            else "mps" if torch.backends.mps.is_available() else "cpu"
-        )
-
-    def exportKey(self):
-        path = HF_KEY_PATH
-        path = os.path.join(path, 'key')
-        with open(path, 'rt') as f:
-            key = f.read().strip()
-        os.environ['HF_TOKEN'] = key
-        login()
-        return key
-
-    def setModel(self):
-        device = self.device
-        model_name = self.model_path
-        model = AutoModelForCausalLM.from_pretrained(
-            pretrained_model_name_or_path=model_name
-        ).to(device)
-        tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=model_name)
-
-        if hasattr(tokenizer, "chat_template") and tokenizer.chat_template is not None:
-            print("Chat template already exists.")
-        else:
-            print("Chat template does not exist.")
-            model, tokenizer = setup_chat_format(model=model, tokenizer=tokenizer)
-
-        return model, tokenizer
 
 class QuantumQA(Dataset):
 
@@ -105,10 +71,48 @@ class PrepareDataset:
         # return train_loader, test_loader
         return train_dataset, test_dataset
 
+class SmolTalkDataset(Dataset):
+
+    def __init__(self, hf_ds_path, hf_ds_name, type='train'):
+        ds = load_dataset(path=hf_ds_path, name=hf_ds_name)
+        self.dataset = ds[type]
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        return self.dataset[idx]['messages']
+
+class PrepareSmolTalk():
+
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def data_genrator(self):
+        for item in self.dataset:
+            for i in item:
+                yield i['content']
+
+    def get_pairs(self):
+        generator = self.data_genrator()
+        while True:
+            try:
+                message = buildSmolLLM135Message(next(generator), next(generator))
+                yield message
+            except StopIteration:
+                break
 
 if __name__ == "__main__":
 
-        data_path = DATA_PATH
-        data_path = os.path.join(data_path, 'qc.xlsx')
-        dataset = QuantumQA(data_path)
+        #data_path = DATA_PATH
+        #data_path = os.path.join(data_path, 'qc.xlsx')
+        #dataset = QuantumQA(data_path)
+        #print(dataset[0])
+
+        hf_ds_path = "HuggingFaceTB/smoltalk"
+        hf_ds_name = "everyday-conversations"
+
+        dataset = SmolTalkDataset(hf_ds_path, hf_ds_name)
+        genn = PrepareSmolTalk(dataset).get_pairs()
+        dataset = GeneratorDataset(genn)
         print(dataset[0])

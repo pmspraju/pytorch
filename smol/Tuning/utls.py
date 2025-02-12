@@ -1,4 +1,5 @@
 import os
+import pickle
 
 # Data path
 DATA_PATH = r'/home/nachiketa/Documents/Workspaces/pytorch/smol/data'
@@ -11,8 +12,8 @@ HF_KEY_PATH = r'/home/nachiketa/Documents/Keys/hugging_face'
 
 # fine tune model path
 FINE_TUNE_MODEL_PATH = r'/home/nachiketa/Documents/Workspaces/checkpoints/smolLM2-135Mfinetune/SmolLM2-FT-QuantumQA'
-CHECK_POINT = "checkpoint-18396"
-FINE_TUNE_MODEL_PATH = os.path.join(FINE_TUNE_MODEL_PATH, CHECK_POINT)
+#CHECK_POINT = "checkpoint-18396"
+#FINE_TUNE_MODEL_PATH = os.path.join(FINE_TUNE_MODEL_PATH, CHECK_POINT)
 #FINE_TUNE_MODEL_PATH = r'/home/nachiketa/Documents/Workspaces/checkpoints/temp'
 
 
@@ -27,6 +28,18 @@ BATCH_SIZE = 2
 
 from pynvml import *
 import torch
+from torch.utils.data import Dataset
+
+class GeneratorDataset(Dataset):
+    def __init__(self, generator):
+        # Convert generator to list for random access
+        self.data = list(generator)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
 
 def buildSmolLLM135Message(question, answer):
     message = [
@@ -62,3 +75,10 @@ def avbl_memory():
         print(f"Total memory: {total_mem / (1024 ** 2):.2f} MB")
     else:
         print("CUDA is not available.")
+
+def printMemorySnapshot(pickle_path):
+    with open(pickle_path, "rb") as f:
+       snapshot = pickle.load(f)
+
+    print(snapshot)  # Prints memory usage statistics
+
