@@ -56,6 +56,7 @@ if __name__ == "__main__":
     #print("Conversation decoded:", tokenizer.decode(token_ids=train_ds[0]))
 
     # fine tune:Train the model
+    # finetuner = FinetuneSmolLLM2135M()
     # finetuner.finetune(train_ds, test_ds)
 
     # Print memory snapshot
