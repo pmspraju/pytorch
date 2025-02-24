@@ -36,6 +36,36 @@ class TokenizeDataset(Dataset):
         )
         return input_text
 
+class PrepareSmolTalk():
+
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def data_genrator(self):
+        for item in self.dataset:
+
+            # extract the prompt
+            prompt = ' '
+            for x in item['chosen']:
+                if x['role'] == 'user':
+                    prompt = x['content']
+                    prompt = prompt_template(prompt)
+                    break
+            # yield the instance as per chat template
+            yield [{'prompt': prompt,
+                    'chosen':item['chosen'],
+                    'rejected':item['rejected']
+                    }]
+
+    def get_pairs(self):
+        generator = self.data_genrator()
+        while True:
+            try:
+                message = next(generator)
+                yield message
+            except StopIteration:
+                break
+
 class SmolTalkDataset(Dataset):
 
     def __init__(self, hf_ds_path, hf_ds_name="default", type='train'):
@@ -60,6 +90,11 @@ if __name__ == "__main__":
         #hf_ds_name = "everyday-conversations"
 
         dataset = SmolTalkDataset(hf_ds_path)
-        #genn = PrepareSmolTalk(dataset).get_pairs()
-        #dataset = GeneratorDataset(genn)
-        pprint(dataset[14])
+        genn = PrepareSmolTalk(dataset).get_pairs()
+        dataset = GeneratorDataset(genn)
+        #pprint(dataset[10])
+
+        #data_loader = DataLoader(dataset, batch_size=2, drop_last=False)
+        #for i, batch in enumerate(data_loader):
+        #    print(f"Batch {i}:", batch)
+        #    break

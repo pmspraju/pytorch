@@ -1,5 +1,6 @@
 import os
 import pickle
+import numpy as np
 
 # Data path
 DATA_PATH = r'/home/nachiketa/Documents/Workspaces/pytorch/smol/data'
@@ -82,3 +83,73 @@ def printMemorySnapshot(pickle_path):
 
     print(snapshot)  # Prints memory usage statistics
 
+def prompt_template(prompt):
+    # Base prompt template
+    prompt_template = [
+            {
+                "role": "assistant",
+                "content": "You are bot, a helpful AI assistant."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+
+    return prompt_template
+
+
+data = [
+    {
+        "prompt": [
+            {"content": "You are bot, a helpful AI assistant.", "role": "assistant"},
+            {"content": "you are ai", "role": "user"}
+        ],
+        "chosen": [
+            {"content": "you are AI", "role": "user"},
+            {"content": "you are AI", "role": "assistant"}
+        ],
+        "rejected": [
+            {"content": "you are AI", "role": "user"},
+            {"content": "you are AI", "role": "assistant"}
+        ]
+    },
+    {
+        "prompt": [
+            {"content": "What is the capital of France?", "role": "user"},
+            {"content": "The capital of France is Paris.", "role": "assistant"}
+        ],
+        "chosen": [
+            {"content": "The capital of France is Paris.", "role": "assistant"},
+            {"content": "Thank you!", "role": "user"}
+        ],
+        "rejected": [
+            {"content": "The capital of France is Lyon.", "role": "assistant"},
+            {"content": "Are you sure?", "role": "user"}
+        ]
+    }
+]
+
+class CreatetempDataset(Dataset):
+    def __init__(self, data, tokeninzer):
+        self.data = data
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        item = self.data[idx]
+        prompt = item['prompt']
+        chosen = item['chosen']
+        rejected = item['rejected']
+
+        # Transform the data as needed
+        # For example, you can convert text to numerical data (tokenization) here
+        return {
+            'prompt': prompt,
+            'chosen': chosen,
+            'rejected': rejected
+        }
+
+def testTokenize(tokeninzer):
+    tds = CreatetempDataset(data, tokeninzer)

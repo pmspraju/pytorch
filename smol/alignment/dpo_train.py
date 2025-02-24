@@ -13,14 +13,14 @@ def dpo_smalltalk():
 
     type = 'train'
     dataset = SmolTalkDataset(hf_ds_path, hf_ds_name, type)
-    #genn = PrepareSmolTalk(dataset).get_pairs()
-    #train_ds = GeneratorDataset(genn)
+    genn = PrepareSmolTalk(dataset).get_pairs()
+    train_ds = GeneratorDataset(genn)
     train_ds = TokenizeDataset(dataset=dataset, tokenizer=tokenizer)
 
     type = 'test'
     dataset = SmolTalkDataset(hf_ds_path, hf_ds_name, type)
-    #genn = PrepareSmolTalk(dataset).get_pairs()
-    #test_ds = GeneratorDataset(genn)
+    genn = PrepareSmolTalk(dataset).get_pairs()
+    test_ds = GeneratorDataset(genn)
     test_ds = TokenizeDataset(dataset=dataset, tokenizer=tokenizer)
 
     return train_ds, test_ds
@@ -35,6 +35,9 @@ if __name__ == "__main__":
 
     # Set the small talk dataset
     train_ds, test_ds = dpo_smalltalk()
+    #pprint(train_ds[0])
+    tdsss = TokenizeDataset(dataset=tds, tokenizer=tokenizer)
+    print(tdsss[0])
 
     print("Length of train dataset:", len(train_ds))
     print("Length of test dataset:", len(test_ds))
@@ -46,13 +49,13 @@ if __name__ == "__main__":
         'finetune_tags': ['smol-course', 'DPO']
     }
     # fine tune:Train the model
-    finetuner = FinetuneSmolLLM2135M(MODEL_SMOLLM2_135M_I_PATH, **kwargs)
-    finetuner.finetune(train_ds, test_ds)
+    #finetuner = FinetuneSmolLLM2135M(MODEL_SMOLLM2_135M_I_PATH, **kwargs)
+    #finetuner.finetune(train_ds, test_ds)
 
     # Print memory snapshot
-    pickle_path = FINE_TUNE_MODEL_PATH
-    pickle_path = os.path.join(pickle_path, 'memory_snapshot.pkl')
-    printMemorySnapshot(pickle_path)
+    #pickle_path = FINE_TUNE_MODEL_PATH
+    #pickle_path = os.path.join(pickle_path, 'memory_snapshot.pkl')
+    #printMemorySnapshot(pickle_path)
 
     # test the base model
     # finetuner = FinetuneSmolLLM2135M()

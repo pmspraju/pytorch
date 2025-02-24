@@ -43,6 +43,7 @@ class SmolLm2135M:
 
         if hasattr(tokenizer, "chat_template") and tokenizer.chat_template is not None:
             print("Chat template already exists.")
+            print("Chat template", tokenizer.chat_template)
         else:
             print("Chat template does not exist.")
             model, tokenizer = setup_chat_format(model=model, tokenizer=tokenizer)
