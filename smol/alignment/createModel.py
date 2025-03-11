@@ -113,7 +113,7 @@ class FinetuneSmolLLM2135M:
             # Learning rate schedule - 'cosine' gradually decreases LR following cosine curve
             lr_scheduler_type="cosine",
             # Total number of training steps
-            max_steps=2,
+            max_steps=100,
             # Disables model checkpointing during training
             save_strategy="no",
             # How often to log training metrics
@@ -188,7 +188,9 @@ class FinetuneSmolLLM2135M:
         trainer.train()
 
         # Save the model
-        trainer.save_model(f"./{self.finetune_name}")
+        #trainer.save_model(f"./{self.finetune_name}")
+        trainer.save_model(FINE_TUNE_MODEL_PATH)
+
 
     def testfinetunedmodel(self, prompt):
         #prompt = "Write a haiku about programming"

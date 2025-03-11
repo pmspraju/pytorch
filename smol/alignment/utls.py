@@ -98,6 +98,11 @@ def prompt_template(prompt):
 
     return prompt_template
 
+def checkMap(ds):
+    if hasattr(ds, 'map'):
+        print("yes map exists")
+    else:
+        print("train_dataset does not support .map(). Ensure it's a datasets.Dataset object.")
 
 data = [
     {
@@ -133,23 +138,34 @@ data = [
 class CreatetempDataset(Dataset):
     def __init__(self, data, tokeninzer):
         self.data = data
+        self.tokenizer = tokeninzer
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         item = self.data[idx]
-        prompt = item['prompt']
-        chosen = item['chosen']
-        rejected = item['rejected']
+        #prompt = item['prompt']
+        #chosen = item['chosen']
+        #rejected = item['rejected']
+        prompt = " ".join([turn["content"] for turn in item["prompt"]])
+        chosen = " ".join([turn["content"] for turn in item["chosen"]])
+        rejected = " ".join([turn["content"] for turn in item["rejected"]])
+        print({'prompt':prompt, 'chosen':chosen, 'rejected':rejected})
+
+        # Tokenize the data
+        prompt_tokens = self.tokenizer(prompt, return_tensors="pt", padding=True, truncation=True)
+        chosen_tokens = self.tokenizer(chosen, return_tensors="pt", padding=True, truncation=True)
+        rejected_tokens = self.tokenizer(rejected, return_tensors="pt", padding=True, truncation=True)
 
         # Transform the data as needed
         # For example, you can convert text to numerical data (tokenization) here
         return {
-            'prompt': prompt,
-            'chosen': chosen,
-            'rejected': rejected
+            'prompt': prompt_tokens,
+            'chosen': chosen_tokens,
+            'rejected': rejected_tokens
         }
 
 def testTokenize(tokeninzer):
     tds = CreatetempDataset(data, tokeninzer)
+    return  tds
