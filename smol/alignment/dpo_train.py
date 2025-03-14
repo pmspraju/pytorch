@@ -83,6 +83,7 @@ if __name__ == "__main__":
     #     pprint(example)
     #     break
 
+    ## Testing by creating subsets
     #train_ds = Subset(train_ds, indices=list(range(1)))
     #test_ds = Subset(test_ds, indices=list(range(1)))
     #print(train_ds[0])

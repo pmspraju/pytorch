@@ -71,6 +71,26 @@ class ClearCacheCallback(TrainerCallback):
             print('After clearing cache:')
             print_gpu_utilization()
 
+    def on_step_end(self, args, state, control, **kwargs):
+        print('End of step memory usage')
+        print_gpu_utilization()
+
+        # record memory snapshot
+        # torch.cuda.memory._dump_snapshot(f"memory_epoch_{state.epoch}.pkl")
+
+        #return
+        # Clear the cache after every N steps
+        N = 8
+        if (state.global_step) % N == 0:
+            print('Before clearing cache:')
+            print_gpu_utilization()
+
+            print(f"Clearing GPU cache after epoch {state.global_step}...")
+            torch.cuda.empty_cache()
+
+            print('After clearing cache:')
+            print_gpu_utilization()
+
 class FinetuneSmolLLM2135M:
     def __init__(self, model_path=MODEL_SMOLLM2_135M_I_PATH, **kwargs):
         # clear the cache before fine tuning
@@ -101,10 +121,10 @@ class FinetuneSmolLLM2135M:
         # Configure the SFTTrainer
         self.dpo_config = DPOConfig(
             # Training batch size per GPU
-            per_device_train_batch_size=4,
+            per_device_train_batch_size=2,#4,
             # Number of updates steps to accumulate before performing a backward/update pass
             # Effective batch size = per_device_train_batch_size * gradient_accumulation_steps
-            gradient_accumulation_steps=4,
+            gradient_accumulation_steps=2,#4,
             # Saves memory by not storing activations during forward pass
             # Instead recomputes them during backward pass
             gradient_checkpointing=True,
@@ -112,8 +132,10 @@ class FinetuneSmolLLM2135M:
             learning_rate=5e-5,
             # Learning rate schedule - 'cosine' gradually decreases LR following cosine curve
             lr_scheduler_type="cosine",
-            # Total number of training steps
-            max_steps=100,
+            # epochs
+            #num_train_epochs=48,
+            # Total number of training steps, it overrides epochs
+            max_steps=144,
             # Disables model checkpointing during training
             save_strategy="no",
             # How often to log training metrics
